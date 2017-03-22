@@ -3,16 +3,15 @@ from bs4 import BeautifulSoup
 
 url = "http://www.thestar.com.my/news/nation/2017/03/22/lima-2017-malaysia-officially-receives-its-latest-rmaf-a400m-aircraft/"
 
-page = urllib2.urlopen(url)	#query website and return html
+page = urllib2.urlopen(url)			#query website and return html
 
-soup = BeautifulSoup(page)	#parse html in BS format
+soup = BeautifulSoup(page, 'html.parser')	#parse html in BS format
 
-#print soup.prettify()		#look at html structure
+#print soup.prettify()				#look at html structure
 
-#print soup.script
+print soup.script
 
-#print soup.find_all("p")
+for link in soup.find_all('a'):
+	print link.get('href')
 
-all_para = soup.find_all("div")
-for para in all_para:
-	print para
+print soup.get_text()
