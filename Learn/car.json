@@ -1,0 +1,10 @@
+{
+  "mycar": {
+    "transmission": "auto", 
+    "color": "red", 
+    "features": {
+      "power steering": true
+    }, 
+    "doors": 4
+  }
+}

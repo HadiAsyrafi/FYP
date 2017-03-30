@@ -1,0 +1,7 @@
+{
+  "make": "Ford", 
+  "model": "Olol", 
+  "features": {
+    "power steering": true
+  }
+}
