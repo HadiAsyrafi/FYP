@@ -1,5 +1,5 @@
 from Tkinter import *
-import Tkinter as ttk
+import ttk
 
 def calculate(*args):
     try:
@@ -11,7 +11,7 @@ def calculate(*args):
 root = Tk()
 root.title("Feet to Meters")
 
-mainframe = ttk.Frame(root, padx=3, pady=12)
+mainframe = ttk.Frame(root, padding="3 3 12 12")
 mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 mainframe.columnconfigure(0, weight=1)
 mainframe.rowconfigure(0, weight=1)
