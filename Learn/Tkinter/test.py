@@ -1,10 +1,11 @@
 from Tkinter import *
 import ttk
 
-class MyFirstGUI:
+class mainGui:
+
     def __init__(self, master):
         self.master = master
-        master.title("A simple GUI")
+        master.title("Wikipedia Tools")
 
 	self.mainframe = ttk.Frame(master, padding="3 3 12 12")
 	self.mainframe.pack()
@@ -22,6 +23,6 @@ class MyFirstGUI:
         print("Greetings!")
 
 root = Tk()
-my_gui = MyFirstGUI(root)
+my_gui = mainGui(root)
 root.mainloop()
 
