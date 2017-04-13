@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 text = ""
 
-url = "https://en.wikipedia.org/wiki/LinkedIn"
+url = "https://en.wikipedia.org/wiki/Guy_Fawkes"
 
 page = urllib2.urlopen(url)			#query website and return html
 

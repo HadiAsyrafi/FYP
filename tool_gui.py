@@ -12,17 +12,19 @@ class mainGui:
 	self.mainframe = ttk.Frame(master, padding="3 3 12 12")
 	self.mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 
-        self.label = ttk.Label(self.mainframe, text="This is our first GUI!")
-        self.label.pack()
+        vcmd = master.register(self.validate)
+        self.entry = Entry(master, validate="key", validatecommand=(vcmd, '%P'), textvariable=url)
 
-        self.greet_button = ttk.Button(self.mainframe, text="Greet", command=self.greet)
-        self.greet_button.pack(side=LEFT)
+	url = stringVar()
 
-        self.close_button = ttk.Button(self.mainframe, text="Close", command=master.quit)
-        self.close_button.pack(side=RIGHT)
+	self.add_button = Button(master, text="+", command=lambda: self.update("add"))
 
-    def greet(self):
-        print("Greetings!")
+        
+
+    def validate(self, url):
+	return True
+
+	
 
 root = Tk()
 my_gui = mainGui(root)
