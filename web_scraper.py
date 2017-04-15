@@ -3,13 +3,13 @@ from bs4 import BeautifulSoup
 
 text = ""
 
-url = "https://en.wikipedia.org/wiki/Guy_Fawkes"
+url = "file:///home/hadi/Documents/FYP/Automatic%20summarization%20-%20Wikipedia.html"
 
-page = urllib2.urlopen(url)			#query website and return html
-
-soup = BeautifulSoup(page, "html.parser")	#parse html in BS format
+page = urllib2.urlopen(url)			
+soup = BeautifulSoup(page, "html.parser")	
 
 #soup = BeautifulSoup(open('three_sisters.html'), 'html.parser')
+#content_text = soup.body
 
 soup.table.extract()
 
@@ -18,11 +18,7 @@ print title.string
 
 text = ""
 
-#body_content = soup.find_all('div', id = 'bodyContent')
-
 content_text = soup.find('div', id = 'mw-content-text')
-		
-#content_text = soup.body
 
 def find_string(tag, store):
 	for child in tag.children:

@@ -23,22 +23,11 @@ class mainGui:
 
 	self.search_button = Button(self.mainframe, text="Search", command=self.search_url)
 
-	'''self.one = ttk.Checkbutton(self.mainframe, text="One")
-	self.two = ttk.Checkbutton(self.mainframe, text="Two")
-	self.three = ttk.Checkbutton(self.mainframe, text="Three")
-	self.ok = ttk.Button(self.mainframe, text="Okay")
-	self.cancel = ttk.Button(self.mainframe, text="Cancel")
-
-	self.one.grid(column=0, row=3)
-	self.two.grid(column=1, row=3)
-	self.three.grid(column=2, row=3)
-	self.ok.grid(column=3, row=3)
-	self.cancel.grid(column=4, row=3)'''
-
         # Layout
 	
-	self.entry.grid(row=0, column=1, columnspan=2, sticky=W+E)
+	self.entry.grid(row=0, column=1, columnspan=2, sticky=N+S+W+E)
         self.search_button.grid(row=0, column=3, columnspan=1, sticky=W+E)
+
 
     def textPad(self,frame):
 	#add a frame and put a text area into it
