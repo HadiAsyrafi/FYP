@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-import json
-import nltk
-import numpy
+from nltk.tokenize import sent_tokenize,word_tokenize
+from nltk.corpus import stopwords
+from collections import defaultdict
+from string import punctuation
+from heapq import nlargest
+import urllib2
+from bs4 import BeautifulSoup
 
-txt = '''The winter of my seventh grade year, my alcoholic mother entered a psychiatric unit for an attempted suicide. Mom survived, but I would never forget visiting her at the ward or the complete confusion I felt about her attempt to end her life. Today I realize that this experience greatly influenced my professional ambition as well as my personal identity. While early on my professional ambitions were aimed towards the mental health field, later experiences have redirected me towards a career in academia.
+text= '''The winter of my seventh grade year, my alcoholic mother entered a psychiatric unit for an attempted suicide. Mom survived, but I would never forget visiting her at the ward or the complete confusion I felt about her attempt to end her life. Today I realize that this experience greatly influenced my professional ambition as well as my personal identity. While early on my professional ambitions were aimed towards the mental health field, later experiences have redirected me towards a career in academia.
 
 I come from a small, economically depressed town in Northern Wisconson. Many people in this former mining town do not graduate high school and for them college is an idealistic concept, not a reality. Neither of my parents attended college. Feelings of being trapped in a stagnant environment permeated my mind, and yet I knew I had to graduate high school; I had to get out. Although most of my friends and family did not understand my ambitions, I knew I wanted to make a difference and used their doubt as motivation to press through. Four days after I graduated high school, I joined the U.S. Army.
 
@@ -27,127 +31,75 @@ Participation in the University of Rochester’s Graduate School Visitation Prog
 
 From attending S.E.R.E. (Survival/POW training) in the military and making it through a model comparisons course as an undergraduate, I have rarely shied away from a challenge. I thrive on difficult tasks as I enjoy systematically developing solutions to problems. Attending the University of Rochester would more than likely prove a challenge, but there is no doubt in my mind that I would not only succeed but enable me to offer a unique set of experiences to fellow members of the incoming graduate class. '''
 
-'''#print txt.split(".")
+class FrequencySummarizer:
+  def __init__(self, min_cut=0.1, max_cut=0.9):
+    """
+     Initilize the text summarizer.
+     Words that have a frequency term lower than min_cut 
+     or higer than max_cut will be ignored.
+    """
+    self._min_cut = min_cut
+    self._max_cut = max_cut 
+    self._stopwords = set(stopwords.words('english') + list(punctuation))
 
-sentences = nltk.tokenize.sent_tokenize(txt)
-#print sentences
+  def _compute_frequencies(self, word_sent):
+    """ 
+      Compute the frequency of each of word.
+      Input: 
+       word_sent, a list of sentences already tokenized.
+      Output: 
+       freq, a dictionary where freq[w] is the frequency of w.
+    """
+    freq = defaultdict(int)
+    for s in word_sent:
+      for word in s:
+        if word not in self._stopwords:
+          freq[word] += 1
+    # frequencies normalization and fitering
+    m = float(max(freq.values()))
+    for w in freq.keys():
+      freq[w] = freq[w]/m
+      if freq[w] >= self._max_cut or freq[w] <= self._min_cut:
+        del freq[w]
+    return freq
 
-tokens = [nltk.tokenize.word_tokenize(s) for s in sentences]
-#print tokens
+  def summarize(self, text, n):
+    """
+      Return a list of n sentences 
+      which represent the summary of text.
+    """
+    sents = sent_tokenize(text)
+    assert n <= len(sents)
+    word_sent = [word_tokenize(s.lower()) for s in sents]
+    self._freq = self._compute_frequencies(word_sent)
+    ranking = defaultdict(int)
+    for i,sent in enumerate(word_sent):
+      for w in sent:
+        if w in self._freq:
+          ranking[i] += self._freq[w]
+    sents_idx = self._rank(ranking, n)    
+    return [sents[j] for j in sents_idx]
 
-pos_tagged_tokens = [nltk.pos_tag(t) for t in tokens]
-#print pos_tagged_tokens
-
-#for chunk in nltk.ne_chunk_sents(pos_tagged_tokens, binary=True):
-    #print(chunk)'''
-
-
-N = 5  # Number of words to consider
-CLUSTER_THRESHOLD = 5  # Distance between words to consider
-TOP_SENTENCES = 5  # Number of sentences to return for a "top n" summary
-
-# Approach taken from "The Automatic Creation of Literature Abstracts" by H.P. Luhn
-
-def _score_sentences(sentences, important_words):
-    scores = []
-    sentence_idx = -1
-
-    for s in [nltk.tokenize.word_tokenize(s) for s in sentences]:
-
-        sentence_idx += 1
-        word_idx = []
-
-        # For each word in the word list...
-        for w in important_words:
-            try:
-                # Compute an index for where any important words occur in the sentence.
-
-                word_idx.append(s.index(w))
-            except ValueError, e: # w not in this particular sentence
-                pass
-
-        word_idx.sort()
-
-        # It is possible that some sentences may not contain any important words at all.
-        if len(word_idx)== 0: continue
-
-        # Using the word index, compute clusters by using a max distance threshold
-        # for any two consecutive words.
-
-        clusters = []
-        cluster = [word_idx[0]]
-        i = 1
-        while i < len(word_idx):
-            if word_idx[i] - word_idx[i - 1] < CLUSTER_THRESHOLD:
-                cluster.append(word_idx[i])
-            else:
-                clusters.append(cluster[:])
-                cluster = [word_idx[i]]
-            i += 1
-        clusters.append(cluster)
-
-        # Score each cluster. The max score for any given cluster is the score 
-        # for the sentence.
-
-        max_cluster_score = 0
-        for c in clusters:
-            significant_words_in_cluster = len(c)
-            total_words_in_cluster = c[-1] - c[0] + 1
-            score = 1.0 * significant_words_in_cluster \
-                * significant_words_in_cluster / total_words_in_cluster
-
-            if score > max_cluster_score:
-                max_cluster_score = score
-
-        scores.append((sentence_idx, score))
-
-    return scores
-
-def summarize(txt):
-    sentences = [s for s in nltk.tokenize.sent_tokenize(txt)]
-    normalized_sentences = [s.lower() for s in sentences]
-
-    words = [w.lower() for sentence in normalized_sentences for w in
-             nltk.tokenize.word_tokenize(sentence)]
-
-    fdist = nltk.FreqDist(words)
-
-    top_n_words = [w[0] for w in fdist.items() 
-            if w[0] not in nltk.corpus.stopwords.words('english')][:N]
-
-    scored_sentences = _score_sentences(normalized_sentences, top_n_words)
-
-    # Summarization Approach 1:
-    # Filter out nonsignificant sentences by using the average score plus a
-    # fraction of the std dev as a filter
-
-    avg = numpy.mean([s[1] for s in scored_sentences])
-    std = numpy.std([s[1] for s in scored_sentences])
-    mean_scored = [(sent_idx, score) for (sent_idx, score) in scored_sentences
-                   if score > avg + 0.5 * std]
-
-    # Summarization Approach 2:
-    # Another approach would be to return only the top N ranked sentences
-
-    top_n_scored = sorted(scored_sentences, key=lambda s: s[1])[-TOP_SENTENCES:]
-    top_n_scored = sorted(top_n_scored, key=lambda s: s[0])
-
-    # Decorate the post object with summaries
-
-    return dict(top_n_summary=[sentences[idx] for (idx, score) in top_n_scored],
-                mean_scored_summary=[sentences[idx] for (idx, score) in mean_scored])
+  def _rank(self, ranking, n):
+    """ return the first n sentences with highest ranking """
+    return nlargest(n, ranking, key=ranking.get)
 
 
-output = summarize(txt)
+def get_only_text(url):
+ """ 
+  return the title and the text of the article
+  at the specified url
+ """
+ page = urllib2.urlopen(url).read().decode('utf8')
+ soup = BeautifulSoup(page)
+ text = ' '.join(map(lambda p: p.text, soup.find_all('p')))
+ return soup.title.text, text
 
-print '\n\n'
+fs = FrequencySummarizer()
 
-for data in output['top_n_summary']:
-	print data
+#title, text = get_only_text(article_url)
+#print title
+for s in fs.summarize(text, 2):
+   print '*',s
 
-print '\n\nDivider\n\n'
 
-for data in output['mean_scored_summary']:
-	print data
-
- 

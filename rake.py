@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import json
-import nltk
-import numpy
+from rake_nltk import Rake
 
-txt = '''The winter of my seventh grade year, my alcoholic mother entered a psychiatric unit for an attempted suicide. Mom survived, but I would never forget visiting her at the ward or the complete confusion I felt about her attempt to end her life. Today I realize that this experience greatly influenced my professional ambition as well as my personal identity. While early on my professional ambitions were aimed towards the mental health field, later experiences have redirected me towards a career in academia.
+text = '''The winter of my seventh grade year, my alcoholic mother entered a psychiatric unit for an attempted suicide. Mom survived, but I would never forget visiting her at the ward or the complete confusion I felt about her attempt to end her life. Today I realize that this experience greatly influenced my professional ambition as well as my personal identity. While early on my professional ambitions were aimed towards the mental health field, later experiences have redirected me towards a career in academia.
 
 I come from a small, economically depressed town in Northern Wisconson. Many people in this former mining town do not graduate high school and for them college is an idealistic concept, not a reality. Neither of my parents attended college. Feelings of being trapped in a stagnant environment permeated my mind, and yet I knew I had to graduate high school; I had to get out. Although most of my friends and family did not understand my ambitions, I knew I wanted to make a difference and used their doubt as motivation to press through. Four days after I graduated high school, I joined the U.S. Army.
 
@@ -27,127 +25,16 @@ Participation in the University of Rochester’s Graduate School Visitation Prog
 
 From attending S.E.R.E. (Survival/POW training) in the military and making it through a model comparisons course as an undergraduate, I have rarely shied away from a challenge. I thrive on difficult tasks as I enjoy systematically developing solutions to problems. Attending the University of Rochester would more than likely prove a challenge, but there is no doubt in my mind that I would not only succeed but enable me to offer a unique set of experiences to fellow members of the incoming graduate class. '''
 
-'''#print txt.split(".")
+r = Rake() # Uses stopwords for english from NLTK, and all puntuation characters.
 
-sentences = nltk.tokenize.sent_tokenize(txt)
-#print sentences
+# If you want to provide your own set of stop words and punctuations to
+# r = Rake(<list of stopwords>, <string of puntuations to ignore>
 
-tokens = [nltk.tokenize.word_tokenize(s) for s in sentences]
-#print tokens
+r.extract_keywords_from_text(text)
 
-pos_tagged_tokens = [nltk.pos_tag(t) for t in tokens]
-#print pos_tagged_tokens
+result = r.get_ranked_phrases() # To get keyword phrases ranked highest to lowest.
+result = r.get_ranked_phrases_with_scores()
 
-#for chunk in nltk.ne_chunk_sents(pos_tagged_tokens, binary=True):
-    #print(chunk)'''
-
-
-N = 5  # Number of words to consider
-CLUSTER_THRESHOLD = 5  # Distance between words to consider
-TOP_SENTENCES = 5  # Number of sentences to return for a "top n" summary
-
-# Approach taken from "The Automatic Creation of Literature Abstracts" by H.P. Luhn
-
-def _score_sentences(sentences, important_words):
-    scores = []
-    sentence_idx = -1
-
-    for s in [nltk.tokenize.word_tokenize(s) for s in sentences]:
-
-        sentence_idx += 1
-        word_idx = []
-
-        # For each word in the word list...
-        for w in important_words:
-            try:
-                # Compute an index for where any important words occur in the sentence.
-
-                word_idx.append(s.index(w))
-            except ValueError, e: # w not in this particular sentence
-                pass
-
-        word_idx.sort()
-
-        # It is possible that some sentences may not contain any important words at all.
-        if len(word_idx)== 0: continue
-
-        # Using the word index, compute clusters by using a max distance threshold
-        # for any two consecutive words.
-
-        clusters = []
-        cluster = [word_idx[0]]
-        i = 1
-        while i < len(word_idx):
-            if word_idx[i] - word_idx[i - 1] < CLUSTER_THRESHOLD:
-                cluster.append(word_idx[i])
-            else:
-                clusters.append(cluster[:])
-                cluster = [word_idx[i]]
-            i += 1
-        clusters.append(cluster)
-
-        # Score each cluster. The max score for any given cluster is the score 
-        # for the sentence.
-
-        max_cluster_score = 0
-        for c in clusters:
-            significant_words_in_cluster = len(c)
-            total_words_in_cluster = c[-1] - c[0] + 1
-            score = 1.0 * significant_words_in_cluster \
-                * significant_words_in_cluster / total_words_in_cluster
-
-            if score > max_cluster_score:
-                max_cluster_score = score
-
-        scores.append((sentence_idx, score))
-
-    return scores
-
-def summarize(txt):
-    sentences = [s for s in nltk.tokenize.sent_tokenize(txt)]
-    normalized_sentences = [s.lower() for s in sentences]
-
-    words = [w.lower() for sentence in normalized_sentences for w in
-             nltk.tokenize.word_tokenize(sentence)]
-
-    fdist = nltk.FreqDist(words)
-
-    top_n_words = [w[0] for w in fdist.items() 
-            if w[0] not in nltk.corpus.stopwords.words('english')][:N]
-
-    scored_sentences = _score_sentences(normalized_sentences, top_n_words)
-
-    # Summarization Approach 1:
-    # Filter out nonsignificant sentences by using the average score plus a
-    # fraction of the std dev as a filter
-
-    avg = numpy.mean([s[1] for s in scored_sentences])
-    std = numpy.std([s[1] for s in scored_sentences])
-    mean_scored = [(sent_idx, score) for (sent_idx, score) in scored_sentences
-                   if score > avg + 0.5 * std]
-
-    # Summarization Approach 2:
-    # Another approach would be to return only the top N ranked sentences
-
-    top_n_scored = sorted(scored_sentences, key=lambda s: s[1])[-TOP_SENTENCES:]
-    top_n_scored = sorted(top_n_scored, key=lambda s: s[0])
-
-    # Decorate the post object with summaries
-
-    return dict(top_n_summary=[sentences[idx] for (idx, score) in top_n_scored],
-                mean_scored_summary=[sentences[idx] for (idx, score) in mean_scored])
-
-
-output = summarize(txt)
-
-print '\n\n'
-
-for data in output['top_n_summary']:
-	print data
-
-print '\n\nDivider\n\n'
-
-for data in output['mean_scored_summary']:
-	print data
-
- 
+for (score, phrase) in result:
+	if score > 5:
+		print phrase
