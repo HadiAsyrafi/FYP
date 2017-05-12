@@ -23,8 +23,9 @@ grammar = r"""
         {<NN.*|JJ>*<NN.*>}  # Nouns and Adjectives, terminated with Nouns
         
     NP:
-        {<NBAR>}
+       
         {<NBAR><IN><NBAR>}  # Above, connected with in/of/etc...
+	{<NBAR>}
 """
 chunker = nltk.RegexpParser(grammar)
 

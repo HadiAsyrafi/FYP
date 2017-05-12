@@ -42,7 +42,7 @@ pos_tagged_tokens = [nltk.pos_tag(t) for t in tokens]
     #print(chunk)'''
 
 
-N = 5  # Number of words to consider
+N = 130  # Number of words to consider
 CLUSTER_THRESHOLD = 5  # Distance between words to consider
 TOP_SENTENCES = 5  # Number of sentences to return for a "top n" summary
 
