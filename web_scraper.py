@@ -1,36 +1,56 @@
 import urllib2
+import re
 from bs4 import BeautifulSoup
 
-text = ""
+class web_scraper(object):
+	
+	def __init__ (self, site = 'Wikipedia'):
 
-url = "file:///home/hadi/Documents/FYP/Automatic%20summarization%20-%20Wikipedia.html"
+		url = "https://en.wikipedia.org/wiki/" + site
+		page = urllib2.urlopen(url)			
+		soup = BeautifulSoup(page, "html.parser")	
 
-page = urllib2.urlopen(url)			
-soup = BeautifulSoup(page, "html.parser")	
+		soup.find(id = 'toc').extract()
 
-#soup = BeautifulSoup(open('three_sisters.html'), 'html.parser')
-#content_text = soup.body
+		for tag in soup('table'):
+			tag.extract()
 
-soup.table.extract()
+		for tag in soup(role = 'note'):
+			tag.extract()
 
-title = soup.head.title
-print title.string
+		for tag in soup(class_ = 'chart'):
+			tag.extract()
 
-text = ""
+		for tag in soup(class_ = 'mw-editsection'):
+			tag.extract()
 
-content_text = soup.find('div', id = 'mw-content-text')
+		for tag in soup('sup'):
+			tag.extract()
 
-def find_string(tag, store):
-	for child in tag.children:
+		for tag in soup(class_ = "thumb"):
+			tag.extract()
 
-		if child.string is None :
-			store = find_string(child, store)
+		for tag in soup(string = re.compile("See also:")):
+			tag.extract()
 
-		else:
-			store = store + unicode(child.string)
+
+		self.title = soup.find(id = 'firstHeading').string
+
+		text = ""
+		content_text = soup.find('div', id = 'mw-content-text')
+		self.txt = self.find_string(content_text, text)
+
+	def find_string(self, tag, store):
+
+		for child in tag.children:
+
+			if child.string is None :
+				store = self.find_string(child, store)
+
+			else:
+				string = unicode(child.string)
+				if (string == "See also") or (string == "References"):
+					break;
+				store = store + string
 		
-	return store
-
-text = find_string(content_text, text)
-
-print text
+		return store

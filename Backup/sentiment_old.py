@@ -1,6 +1,12 @@
 import nltk
 import yaml
 
+text = '''What can I say about this place. The staff of the restaurant is nice and the eggplant is not bad. Apart from that, very uninspired food, lack of atmosphere and too expensive. I am a staunch vegetarian and was sorely dissapointed with the veggie options on the menu. Will be the last time I visit, I recommend others to avoid.
+'''
+
+
+
+
 class Splitter(object):
     def __init__(self):
         self.nltk_splitter = nltk.data.load('tokenizers/punkt/english.pickle')
@@ -35,6 +41,12 @@ class POSTagger(object):
         #adapt format
         pos = [[(word, word, [postag]) for (word, postag) in sentence] for sentence in pos]
 	return pos
+
+splitter = Splitter()
+postagger = POSTagger()
+
+splitted_sentences = splitter.split(text)
+pos_tagged_sentences = postagger.pos_tag(splitted_sentences)
 
 class DictionaryTagger(object):
     def __init__(self, dictionary_paths):
@@ -95,6 +107,10 @@ class DictionaryTagger(object):
                 i += 1
 	return tag_sentence
 
+dicttagger = DictionaryTagger([ 'dicts/positive.yml', 'dicts/negative.yml', 'dicts/inc.yml', 'dicts/dec.yml', 'dicts/inv.yml'])
+
+dict_tagged_sentences = dicttagger.tag(pos_tagged_sentences)
+
 def value_of(sentiment):
     if sentiment == 'positive': return 1
     if sentiment == 'negative': return -1
@@ -119,3 +135,5 @@ def sentence_score(sentence_tokens, previous_token, acum_score):
 
 def sentiment_score(review):
     return sum([sentence_score(sentence, None, 0.0) for sentence in review])
+
+print sentiment_score(dict_tagged_sentences)
