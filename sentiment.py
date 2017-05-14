@@ -55,12 +55,7 @@ class DictionaryTagger(object):
         return [self.tag_sentence(sentence) for sentence in postagged_sentences]
 
     def tag_sentence(self, sentence, tag_with_lemmas=False):
-        """
-        the result is only one tagging of all the possible ones.
-        The resulting tagging is determined by these two priority rules:
-            - longest matches have higher priority
-            - search is made from left to right
-        """
+        
         tag_sentence = []
         N = len(sentence)
         if self.max_key_size == 0:
