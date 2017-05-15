@@ -24,6 +24,9 @@ class web_scraper(object):
 		for tag in soup(class_ = 'mw-editsection'):
 			tag.extract()
 
+		for tag in soup(class_ = 'mwe-math-element'):
+			tag.extract()
+
 		for tag in soup('sup'):
 			tag.extract()
 

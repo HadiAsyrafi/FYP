@@ -39,7 +39,6 @@ class lang_detect(object):
 	    #stopwords_set = set(open("malay_stopwords.txt").readlines())
 	    words_set = set(self.words)
 	    common_elements = words_set.intersection(stopwords_set)
-	    print stopwords_set
 	    languages_ratios['malay'] = len(common_elements)
 	    return languages_ratios
 
@@ -49,9 +48,6 @@ class lang_detect(object):
 
 	    ratios = self._calculate_languages_ratios()
 	    ratios = self._calculate_malay_language_ratios(ratios)
-
-	    print ratios
-
 	    most_rated_language = max(ratios, key=ratios.get)
 
 	    return most_rated_language
