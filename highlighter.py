@@ -22,7 +22,6 @@ class highlighter(object):
 		sentences = nltk.tokenize.sent_tokenize(self.txt)
 		tokens = [nltk.tokenize.word_tokenize(s) for s in sentences]
 		pos_tagged_tokens = [nltk.pos_tag(t) for t in tokens]
-
 		entity_interactions = []
 
 		for sentence in pos_tagged_tokens:

@@ -16,7 +16,7 @@ print txt'''
 
 '''from lang_detector import lang_detect
 
-txt = textract.process("Short Stories/danish4.txt")
+txt = textract.process("Short Stories/english.txt")
 
 #txt = open('Short Stories/malay.txt', 'r').read()
 
