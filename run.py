@@ -4,13 +4,13 @@ import textract
 
 # web scraper
 
-'''from web_scraper import web_scraper
+from web_scraper import web_scraper
 
-scraper = web_scraper(site = 'lenz\'s law')
+scraper = web_scraper(site = 'lenz law')
 
 txt = scraper.txt
 
-print txt'''
+print txt
 
 # lang detector
 
