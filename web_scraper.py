@@ -7,7 +7,15 @@ class web_scraper(object):
 	def __init__ (self, site = 'Wikipedia'):
 
 		url = "https://en.wikipedia.org/wiki/" + site
-		page = urllib2.urlopen(url)			
+		
+		try :
+			page = urllib2.urlopen(url)
+
+		except urllib2.HTTPError:
+			
+			self.txt = "HTTP Error 404: Page not found"
+			return
+
 		soup = BeautifulSoup(page, "html.parser")	
 
 		soup.find(id = 'toc').extract()

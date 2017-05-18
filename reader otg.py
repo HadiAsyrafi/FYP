@@ -1,7 +1,11 @@
 from Tkinter import *
 import ttk
-from PIL import Image, ImageTk
+import textract
 import Tkinter, tkFileDialog
+
+from PIL import Image, ImageTk
+from web_scraper import web_scraper
+from lang_detector import lang_detect
 
 class mainGui:
 
@@ -40,12 +44,14 @@ class mainGui:
 
 	self.url = StringVar()
 	self.menuvar = StringVar()
+	self.language = StringVar()
 	self.message = "Enter Topic"
 	choices = { 'Wikipedia','Browse','Capture'}
 
 	# init
 
 	self.url.set(self.message)
+	self.language.set('Language')
 	self.menuvar.set('Wikipedia')
 	vcmd = master.register(self.validate)
         
@@ -54,8 +60,8 @@ class mainGui:
 	self.entry = Entry(self.mainframe, validate="all", validatecommand=(vcmd, '%P'), textvariable=self.url)
 	self.menu = OptionMenu(self.mainframe, self.menuvar, *choices, command=self.menu)
 	self.textPad(self.mainframe)
-	ttk.Label(self.mainframe, text="Lng").grid(row=1, column=0)
-	ttk.Label(self.mainframe, text="Smtc").grid(row=1, column=1)
+	self.lang_label = ttk.Label(self.mainframe, textvariable=self.language, width=8).grid(row=1, column=0)
+	self.sentiment = ttk.Label(self.mainframe, text="Smtc").grid(row=1, column=1)
 	self.smiley = Button(self.mainframe, image=smiley_image, bd=0).grid(row=1, column=2, sticky = E)
 	self.summarizer = Button(self.mainframe, image=book_image, bd=0).grid(row=1, column=3, sticky = W)
 	self.highlight = Button(self.mainframe, image=hg_image, bd=0).grid(row=1, column=3, sticky=E)
@@ -77,11 +83,11 @@ class mainGui:
 
 	self.entry.bind('<FocusIn>', self.on_entry_click)
 	self.entry.bind('<FocusOut>', self.on_focusout)
-	self.entry.bind('<Return>', self.push_url)
-
+	self.entry.bind('<Return>', self.wiki_scraper)
+	master.bind ('<Escape>', self.close)
 	# config
 
-	self.menu.config(width=2)
+	self.menu.config(width=5)
 
 
     # methods
@@ -101,22 +107,20 @@ class mainGui:
 	scroll.pack(side=RIGHT, fill=Y)
 	self.text.pack()		
 	textPad.grid(column=0, row=2, columnspan=4)
-
 	return
 
     def validate(self, value):
 	return True
 
 
-    def search_url(self):
+    def update_text(self, text):
+
+	self.text.config(state=NORMAL)
+    	self.text.delete(1.0, END)
+    	self.text.insert(END, text)
+    	self.text.config(state=DISABLED)
+	self.lang_detector(text)
 	return
-
-    def update_text(self):
-
-	self.textPad.config(state=NORMAL)
-    	self.textPad.delete(1.0, END)
-    	self.textPad.insert(END, text)
-    	self.textPad.config(state=DISABLED)
 	
     def menu(self, value):
 
@@ -125,21 +129,38 @@ class mainGui:
 		if file != None:
 		    data = file.read()
 		    file.close()
+	return
 
     def on_entry_click(self, event):
 
-	    if self.entry.get() == self.message:
-	       self.entry.delete(0, "end")
+	if self.entry.get() == self.message:
+		self.entry.delete(0, "end")
+	return
 
     def on_focusout(self, event):
 
-	    if self.entry.get() == '':
+	if self.entry.get() == '':
 		self.entry.insert(0, self.message)
+	return
 
-    def push_url(self, event):
+    def wiki_scraper(self, event):
 
-	    print self.entry.get()
-	    self.entry.delete(0, "end")
+	site = self.entry.get()
+
+	if site:
+		scraper = web_scraper(site)
+		txt = scraper.txt
+		self.update_text(txt)
+	return
+
+    def lang_detector(self, txt):
+	lang = lang_detect(txt)
+	self.language.set(lang.detect_language().capitalize())
+
+
+    def close(self, event):
+	self.master.quit()
+	return
 	 
 
 root = Tk()
