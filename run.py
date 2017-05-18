@@ -4,13 +4,13 @@ import textract
 
 # web scraper
 
-from web_scraper import web_scraper
+'''from web_scraper import web_scraper
 
 scraper = web_scraper(site = 'lenz law')
 
 txt = scraper.txt
 
-print txt
+print txt'''
 
 # lang detector
 
@@ -28,7 +28,7 @@ print lang.detect_language()'''
 
 # highlighter
 
-'''from highlighter import highlighter
+from highlighter import highlighter
 
 txt = textract.process("Short Stories/english.txt")
 
@@ -36,7 +36,7 @@ hg = highlighter(txt)
 
 print hg.txt
 
-hg.highlight()'''
+hg.highlight()
 
 # summariser
 

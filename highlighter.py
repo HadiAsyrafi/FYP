@@ -5,14 +5,13 @@ class highlighter(object):
 
 	def __init__ (self, txt = 'None'):
 
-		self.HTML_TEMPLATE = """<html>
+		'''self.HTML_TEMPLATE = """<html>
 		    <head>
 			<title>%s</title>
 			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		    </head>
 		    <body>%s</body>
-		</html>"""
-
+		</html>"""'''
 
 		self.txt = txt
 		
@@ -48,16 +47,17 @@ class highlighter(object):
 			    entity_interactions.append([])
 
 		assert len(entity_interactions) == len(sentences)
-		markup = []
+		#markup = []
 		for sentence_idx in range(len(sentences)):
 			s = sentences[sentence_idx]
 			for (term, _) in entity_interactions[sentence_idx]:
-			    s = s.replace(term, '<strong>%s</strong>' % (term, ))
-			markup += [s]
+			    s = s.replace(term, '\033[1m%s\033[0m' % (term, ))
+			    self.txt = self.txt + s
+		#	markup += [s]
 
-		html = self.HTML_TEMPLATE % ('News' + ' Interactions', 
+		'''html = self.HTML_TEMPLATE % ('News' + ' Interactions', 
 				            ' '.join(markup),)
 
 		f = open('highlighted.html', 'w')
 		f.write(html.encode('utf-8'))
-		f.close()
+		f.close()'''

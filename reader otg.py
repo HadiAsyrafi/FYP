@@ -6,15 +6,16 @@ import Tkinter, tkFileDialog
 from PIL import Image, ImageTk
 from web_scraper import web_scraper
 from lang_detector import lang_detect
+from highlighter import highlighter
 
 class mainGui:
 
     def __init__(self, master):
-
 	# master
-
+	print '\033[1;30mGray like Ghost\033[1;m'
+	print '\033[1mGray like Ghost\033[0m'
         self.master = master
-	self.master.geometry("%dx%d" % (390, 800))
+	self.master.geometry("%dx%d+%d+%d" % (390, 800, 500, 0))
         self.master.title("OTG Reader")
 	self.master.resizable(width=False, height=True)
 
@@ -46,6 +47,8 @@ class mainGui:
 	self.menuvar = StringVar()
 	self.language = StringVar()
 	self.message = "Enter Topic"
+	self.ori_text = ''
+	self.pro_text = ''
 	choices = { 'Wikipedia','Browse','Capture'}
 
 	# init
@@ -64,7 +67,7 @@ class mainGui:
 	self.sentiment = ttk.Label(self.mainframe, text="Smtc").grid(row=1, column=1)
 	self.smiley = Button(self.mainframe, image=smiley_image, bd=0).grid(row=1, column=2, sticky = E)
 	self.summarizer = Button(self.mainframe, image=book_image, bd=0).grid(row=1, column=3, sticky = W)
-	self.highlight = Button(self.mainframe, image=hg_image, bd=0).grid(row=1, column=3, sticky=E)
+	self.highlight = Button(self.mainframe, image=hg_image, bd=0, command=self.highlighting).grid(row=1, column=3, sticky=E)
 
 	# reassign
 	
@@ -93,7 +96,6 @@ class mainGui:
     # methods
 
     def textPad(self,frame):
-	
 	# widget
 
 	textPad=ttk.Frame(frame)
@@ -113,17 +115,16 @@ class mainGui:
 	return True
 
 
-    def update_text(self, text):
-
+    def update_text(self):
 	self.text.config(state=NORMAL)
     	self.text.delete(1.0, END)
-    	self.text.insert(END, text)
+    	self.text.insert(END, self.pro_text)
     	self.text.config(state=DISABLED)
-	self.lang_detector(text)
+	self.lang_detector(self.ori_text)
+	print self.pro_text
 	return
 	
     def menu(self, value):
-
 	if value == 'Browse':
 		file = tkFileDialog.askopenfile(parent=root,mode='rb',title='Choose a file')
 		if file != None:
@@ -132,30 +133,38 @@ class mainGui:
 	return
 
     def on_entry_click(self, event):
-
 	if self.entry.get() == self.message:
 		self.entry.delete(0, "end")
 	return
 
     def on_focusout(self, event):
-
 	if self.entry.get() == '':
 		self.entry.insert(0, self.message)
 	return
 
     def wiki_scraper(self, event):
-
 	site = self.entry.get()
 
 	if site:
 		scraper = web_scraper(site)
 		txt = scraper.txt
-		self.update_text(txt)
+		self.ori_text = txt
+		self.pro_text = self.ori_text
+		self.update_text()
+		print 'Process Complete'
 	return
 
     def lang_detector(self, txt):
 	lang = lang_detect(txt)
 	self.language.set(lang.detect_language().capitalize())
+
+    def highlighting(self):
+	hg = highlighter(self.pro_text)
+	hg.highlight()
+	self.pro_text = hg.txt
+	self.update_text()
+	print 'Process Complete'
+	return
 
 
     def close(self, event):
