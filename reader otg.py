@@ -24,15 +24,15 @@ class mainGui:
 	bg_image = ImageTk.PhotoImage(bg_image)
 
 	smiley_image = Image.open("Picture/smiley4.png")
-	resized = smiley_image.resize((40, 40),Image.ANTIALIAS)
+	resized = smiley_image.resize((32, 32),Image.ANTIALIAS)
         smiley_image = ImageTk.PhotoImage(resized)
 
 	book_image = Image.open("Picture/book.png")
-	resized = book_image.resize((40, 40),Image.ANTIALIAS)
+	resized = book_image.resize((36, 32),Image.ANTIALIAS)
         book_image = ImageTk.PhotoImage(resized)
 
 	hg_image = Image.open("Picture/hg.png")
-	resized = hg_image.resize((50, 40),Image.ANTIALIAS)
+	resized = hg_image.resize((40, 32),Image.ANTIALIAS)
         hg_image = ImageTk.PhotoImage(resized)
 
 	# mainframe
@@ -42,36 +42,28 @@ class mainGui:
 	self.mainframe.pack(fill="both", expand=True, padx=40, pady=130)
 
 	# variable
-	self.high = False
-	self.sum = False
 	self.url = StringVar()
 	self.menuvar = StringVar()
 	self.language = StringVar()
 	self.sentiment_label = StringVar()
 	self.message = "Enter Topic"
-	self.ori_text = ''
-	self.pro_text = ''
-	self.before_sum = ''
-	choices = { 'Wikipedia','Browse','Capture'}
+	choices = { 'Wiki','Browse','Capture'}
 
 	# init
-
-	self.url.set(self.message)
-	self.language.set('Language')
-	self.sentiment_label.set('Sentiment')
-	self.menuvar.set('Wikipedia')
+	self.init()
+	self.menuvar.set('Wiki')
 	vcmd = master.register(self.validate)
         
 	# widget
 
 	self.entry = Entry(self.mainframe, validate="all", validatecommand=(vcmd, '%P'), textvariable=self.url)
-	self.menu = OptionMenu(self.mainframe, self.menuvar, *choices, command=self.menu)
+	self.menu = OptionMenu(self.mainframe, self.menuvar, *choices, command=self.menu_)
 	self.textPad(self.mainframe)
-	self.lang_label = ttk.Label(self.mainframe, textvariable=self.language, width=8).grid(row=1, column=0)
-	self.sentiment = ttk.Label(self.mainframe, textvariable=self.sentiment_label, width=7).grid(row=1, column=1)
-	self.smiley = Button(self.mainframe, image=smiley_image, bd=0, command=self.sentiment_analysis).grid(row=1, column=2, sticky = E)
-	self.summarizer = Button(self.mainframe, image=book_image, bd=0, command=self.summarize).grid(row=1, column=3, sticky = W)
-	self.highlight = Button(self.mainframe, image=hg_image, bd=0, command=self.highlighting).grid(row=1, column=3, sticky=E)
+	self.lang_label = ttk.Label(self.mainframe, textvariable=self.language, width=12, relief='sunken').grid(row=1, column=0, sticky=N+S, pady=1)
+	self.sentiment = ttk.Label(self.mainframe, textvariable=self.sentiment_label, width=9, relief='raised').grid(row=1, column=1, sticky=N+S, pady=1)
+	self.smiley = Button(self.mainframe, image=smiley_image, command=self.sentiment_analysis, bd=0).grid(row=1, column=2, sticky=E, padx=1)
+	self.summarizer = Button(self.mainframe, image=book_image, command=self.summarize, bd=0).grid(row=1, column=3, sticky=W+N+S)
+	self.highlight = Button(self.mainframe, image=hg_image, command=self.highlighting, bd=0).grid(row=1, column=3, sticky=E+N+S)
 
 	# reassign
 	
@@ -98,6 +90,17 @@ class mainGui:
 
 
     # methods
+    def init(self):
+	self.high = False
+	self.sum = False
+	self.ori_text = ''
+	self.pro_text = ''
+	self.before_sum = ''
+	self.url.set(self.message)
+	self.language.set('     Language')
+	self.sentiment_label.set(' Sentiment')
+	return
+	
 
     def textPad(self,frame):
 	# widget
@@ -126,12 +129,17 @@ class mainGui:
     	self.text.config(state=DISABLED)
 	return
 	
-    def menu(self, value):
+    def menu_(self, value):
+	self.init()
 	if value == 'Browse':
 		file = tkFileDialog.askopenfile(parent=root,mode='rb',title='Choose a file')
 		if file != None:
-		    data = file.read()
-		    file.close()
+		    txt = textract.process(file.name)
+		    print "File loaded successfully"
+		    self.ori_text = txt
+		    self.pro_text = self.ori_text
+		    self.update_text(self.pro_text)
+		    self.lang_detector(self.ori_text)
 	return
 
     def on_entry_click(self, event):
@@ -146,15 +154,7 @@ class mainGui:
 
     def wiki_scraper(self, event):
 	site = self.entry.get()
-	self.high = False
-	self.sum = False
-	self.ori_text = ''
-	self.pro_text = ''
-	self.before_sum = ''
-	self.url.set(self.message)
-	self.language.set('Language')
-	self.sentiment_label.set('Sentiment')
-
+	self.init()
 	if site:
 		scraper = web_scraper(site)
 		txt = scraper.txt
@@ -167,7 +167,7 @@ class mainGui:
 
     def lang_detector(self, txt):
 	lang = lang_detect(txt)
-	self.language.set(lang.detect_language().capitalize())
+	self.language.set('     ' + lang.detect_language().capitalize())
 
     def highlighting(self):
 	self.high = not self.high
@@ -192,7 +192,10 @@ class mainGui:
 
     def color_text(self, tag, word, fg_color='black', bg_color='white'):
 	# add a space to the end of the word
-	word = word + " "
+	if '.' in word:
+		word = word + '\n\n'
+	else:
+		word = word + ' '
 	self.text.insert('end', word)
 	end_index = self.text.index('end')
 	begin_index = "%s-%sc" % (end_index, len(word) + 1)
@@ -201,18 +204,20 @@ class mainGui:
 	return
 
     def sentiment_analysis(self):
+	if self.pro_text == '':
+		return
+
 	splitter = Splitter()
 	postagger = POSTagger()
-
 	splitted_sentences = splitter.split(self.pro_text)
 	pos_tagged_sentences = postagger.pos_tag(splitted_sentences)
 	dicttagger = DictionaryTagger(['dicts/positive.yml', 'dicts/negative.yml', 'dicts/inc.yml', 'dicts/dec.yml', 'dicts/inv.yml'])
 	dict_tagged_sentences = dicttagger.tag(pos_tagged_sentences)
 	score = sentiment_score(dict_tagged_sentences)
 	if score > 0:
-		self.sentiment_label.set("Positive")
+		self.sentiment_label.set("   Positive")
 	else:
-		self.sentiment_label.set("Negative")
+		self.sentiment_label.set("  Negative")
 	return
 
     def summarize(self):
