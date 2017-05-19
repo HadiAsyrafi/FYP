@@ -47,15 +47,15 @@ class highlighter(object):
 			    entity_interactions.append([])
 
 		assert len(entity_interactions) == len(sentences)
-		#markup = []
+		self.keywords = []
 		for sentence_idx in range(len(sentences)):
 			s = sentences[sentence_idx]
 			for (term, _) in entity_interactions[sentence_idx]:
-			    s = s.replace(term, '\033[1m%s\033[0m' % (term, ))
-			    self.txt = self.txt + s
-		#	markup += [s]
-
-		'''html = self.HTML_TEMPLATE % ('News' + ' Interactions', 
+			    self.keywords.append(term)
+				
+		
+		'''
+		html = self.HTML_TEMPLATE % ('News' + ' Interactions', 
 				            ' '.join(markup),)
 
 		f = open('highlighted.html', 'w')
