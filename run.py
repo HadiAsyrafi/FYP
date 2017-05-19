@@ -61,7 +61,7 @@ for data in output['mean_scored_summary']:
 
 # sentiment analysis
 
-from sentiment import *
+'''from sentiment import *
 
 txt = textract.process("Review/malaysia.txt")
 
@@ -77,4 +77,4 @@ dicttagger = DictionaryTagger(['dicts/positive.yml', 'dicts/negative.yml', 'dict
 
 dict_tagged_sentences = dicttagger.tag(pos_tagged_sentences)
 
-print sentiment_score(dict_tagged_sentences)
+print sentiment_score(dict_tagged_sentences)'''

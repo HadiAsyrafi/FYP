@@ -8,6 +8,7 @@ from web_scraper import web_scraper
 from lang_detector import lang_detect
 from highlighter import highlighter
 from sentiment import *
+from summariser import *
 
 class mainGui:
 
@@ -41,7 +42,8 @@ class mainGui:
 	self.mainframe.pack(fill="both", expand=True, padx=40, pady=130)
 
 	# variable
-
+	self.high = False
+	self.sum = False
 	self.url = StringVar()
 	self.menuvar = StringVar()
 	self.language = StringVar()
@@ -49,6 +51,7 @@ class mainGui:
 	self.message = "Enter Topic"
 	self.ori_text = ''
 	self.pro_text = ''
+	self.before_sum = ''
 	choices = { 'Wikipedia','Browse','Capture'}
 
 	# init
@@ -67,7 +70,7 @@ class mainGui:
 	self.lang_label = ttk.Label(self.mainframe, textvariable=self.language, width=8).grid(row=1, column=0)
 	self.sentiment = ttk.Label(self.mainframe, textvariable=self.sentiment_label, width=7).grid(row=1, column=1)
 	self.smiley = Button(self.mainframe, image=smiley_image, bd=0, command=self.sentiment_analysis).grid(row=1, column=2, sticky = E)
-	self.summarizer = Button(self.mainframe, image=book_image, bd=0).grid(row=1, column=3, sticky = W)
+	self.summarizer = Button(self.mainframe, image=book_image, bd=0, command=self.summarize).grid(row=1, column=3, sticky = W)
 	self.highlight = Button(self.mainframe, image=hg_image, bd=0, command=self.highlighting).grid(row=1, column=3, sticky=E)
 
 	# reassign
@@ -116,12 +119,11 @@ class mainGui:
 	return True
 
 
-    def update_text(self):
+    def update_text(self, display):
 	self.text.config(state=NORMAL)
     	self.text.delete(1.0, END)
-    	self.text.insert(END, self.pro_text)
+    	self.text.insert(END, display)
     	self.text.config(state=DISABLED)
-	self.lang_detector(self.ori_text)
 	return
 	
     def menu(self, value):
@@ -144,14 +146,23 @@ class mainGui:
 
     def wiki_scraper(self, event):
 	site = self.entry.get()
+	self.high = False
+	self.sum = False
+	self.ori_text = ''
+	self.pro_text = ''
+	self.before_sum = ''
+	self.url.set(self.message)
+	self.language.set('Language')
+	self.sentiment_label.set('Sentiment')
 
 	if site:
 		scraper = web_scraper(site)
 		txt = scraper.txt
 		self.ori_text = txt
 		self.pro_text = self.ori_text
-		self.update_text()
-		print 'Process Complete'
+		self.update_text(self.pro_text)
+		self.lang_detector(self.ori_text)
+		print 'Scraping Complete'
 	return
 
     def lang_detector(self, txt):
@@ -159,20 +170,24 @@ class mainGui:
 	self.language.set(lang.detect_language().capitalize())
 
     def highlighting(self):
-	hg = highlighter(self.pro_text)
-	hg.highlight()
-	word_list = self.pro_text.split()
-	tags = ["tg" + str(k) for k in range(len(word_list))]
-	self.text.config(state=NORMAL)
-    	self.text.delete(1.0, END)
-	for ix, word in enumerate(word_list):
-		if any(word[:len(keyword)] == keyword for keyword in hg.keywords):
-			self.color_text(tags[ix], word, 'blue')
-		else:
-			self.color_text(tags[ix], word)
+	self.high = not self.high
+	if self.high:
+		hg = highlighter(self.pro_text)
+		hg.highlight()
+		word_list = self.pro_text.split()
+		tags = ["tg" + str(k) for k in range(len(word_list))]
+		self.text.config(state=NORMAL)
+	    	self.text.delete(1.0, END)
+		for ix, word in enumerate(word_list):
+			if any(word[:len(keyword)] == keyword for keyword in hg.keywords):
+				self.color_text(tags[ix], word, 'blue')
+			else:
+				self.color_text(tags[ix], word)
 
-	self.text.config(state=DISABLED)
-	print 'Process Complete'
+		self.text.config(state=DISABLED)
+		print 'Highlighting Complete'
+	else:
+		self.update_text(self.pro_text)
 	return
 
     def color_text(self, tag, word, fg_color='black', bg_color='white'):
@@ -194,11 +209,37 @@ class mainGui:
 	dicttagger = DictionaryTagger(['dicts/positive.yml', 'dicts/negative.yml', 'dicts/inc.yml', 'dicts/dec.yml', 'dicts/inv.yml'])
 	dict_tagged_sentences = dicttagger.tag(pos_tagged_sentences)
 	score = sentiment_score(dict_tagged_sentences)
-	print score
 	if score > 0:
 		self.sentiment_label.set("Positive")
 	else:
 		self.sentiment_label.set("Negative")
+	return
+
+    def summarize(self):
+	self.sum = not self.sum
+	if self.sum:
+		summ = summariser(self.pro_text, len(self.pro_text)/50)
+		output = summ.summarize()
+		summarized = ''
+		for data in output['mean_scored_summary']:
+			summarized = summarized + data + '\n\n'
+		print 'Summarizing Complete'
+		self.before_sum = self.pro_text
+		self.pro_text = summarized
+		
+		if self.high:
+			self.high = not self.high
+			self.highlighting()
+			return
+	else:
+		if self.high:
+			self.high = not self.high
+			self.pro_text = self.before_sum
+			self.highlighting()
+			return
+		else:
+			self.pro_text = self.before_sum
+	self.update_text(self.pro_text)
 	return
 
 
