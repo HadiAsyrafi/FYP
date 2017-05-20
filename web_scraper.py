@@ -16,6 +16,10 @@ class web_scraper(object):
 			self.txt = "HTTP Error 404: Page not found"
 			return
 
+		except urllib2.URLError:
+			self.txt = "URLError: Network not available"
+			return
+
 		soup = BeautifulSoup(page, "html.parser")	
 
 		soup.find(id = 'toc').extract()

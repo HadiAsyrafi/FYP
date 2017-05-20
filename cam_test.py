@@ -10,6 +10,13 @@ from highlighter import highlighter
 from sentiment import *
 from summariser import *
 
+import cv2
+import numpy as np
+import threading
+import imutils
+import os
+
+#   add in new window
 
 class mainGui:
 
@@ -52,6 +59,7 @@ class mainGui:
 
 	# init
 	self.init()
+	self.caminit()
 	self.menuvar.set('Wikipedia')
 	vcmd = master.register(self.validate)
         
@@ -101,6 +109,13 @@ class mainGui:
 	self.language.set('    Language')
 	self.sentiment_label.set('  Sentiment')
 	return
+
+    def caminit(self):
+	self.vs = vs
+	self.outputPath = '/home/hadi/Documents/FYP/Picture'
+	self.frame = None
+	self.thread = None
+	self.stopEvent = None
 	
 
     def textPad(self,frame):
