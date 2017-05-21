@@ -21,7 +21,6 @@ class lang_detect(object):
 	    # Compute per language included in nltk number of unique stopwords appearing in analyzed text
 	    for language in stopwords.fileids():
 	    # [danish, dutch, english, finnish, french, german, hungarian, italian, norwegian, portuguese, spanish, swedish, turkish]
-
 		stopwords_set = set(stopwords.words(language))
 		words_set = set(self.words)
 		common_elements = words_set.intersection(stopwords_set)

@@ -28,15 +28,17 @@ print lang.detect_language()'''
 
 # highlighter
 
-'''from highlighter import highlighter
+from highlighter import highlighter
 
 txt = textract.process("Short Stories/english.txt")
+
+txt = 'John likes to play badminton'
 
 hg = highlighter(txt)
 
 #print hg.txt
 
-hg.highlight()'''
+hg.highlight()
 
 # summariser
 
