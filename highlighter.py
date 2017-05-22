@@ -4,15 +4,6 @@ import nltk
 class highlighter(object):
 
 	def __init__ (self, txt = 'None'):
-
-		'''self.HTML_TEMPLATE = """<html>
-		    <head>
-			<title>%s</title>
-			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-		    </head>
-		    <body>%s</body>
-		</html>"""'''
-
 		self.txt = txt
 		
 
@@ -22,7 +13,6 @@ class highlighter(object):
 		tokens = [nltk.tokenize.word_tokenize(s) for s in sentences]
 		pos_tagged_tokens = [nltk.pos_tag(t) for t in tokens]
 		entity_interactions = []
-
 		for sentence in pos_tagged_tokens:
 		
 			all_entity_chunks = []
@@ -52,12 +42,3 @@ class highlighter(object):
 			s = sentences[sentence_idx]
 			for (term, _) in entity_interactions[sentence_idx]:
 			    self.keywords.append(term)
-				
-		
-		'''
-		html = self.HTML_TEMPLATE % ('News' + ' Interactions', 
-				            ' '.join(markup),)
-
-		f = open('highlighted.html', 'w')
-		f.write(html.encode('utf-8'))
-		f.close()'''

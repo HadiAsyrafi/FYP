@@ -20,7 +20,6 @@ class POSTagger(object):
     def pos_tag(self, sentences):
 
         pos = [nltk.pos_tag(sentence) for sentence in sentences]
-        #adapt format
         pos = [[(word, word, [postag]) for (word, postag) in sentence] for sentence in pos]
 	return pos
 
@@ -50,7 +49,7 @@ class DictionaryTagger(object):
             self.max_key_size = N
         i = 0
         while (i < N):
-            j = min(i + self.max_key_size, N) #avoid overflow
+            j = min(i + self.max_key_size, N)
             tagged = False
             while (j > i):
                 expression_form = ' '.join([word[0] for word in sentence[i:j]]).lower()
@@ -60,13 +59,12 @@ class DictionaryTagger(object):
                 else:
                     literal = expression_form
                 if literal in self.dictionary:
-                    #self.logger.debug("found: %s" % literal)
                     is_single_token = j - i == 1
                     original_position = i
                     i = j
                     taggings = [tag for tag in self.dictionary[literal]]
                     tagged_expression = (expression_form, expression_lemma, taggings)
-                    if is_single_token: #if the tagged literal is a single token, conserve its previous taggings:
+                    if is_single_token:
                         original_token_tagging = sentence[original_position][2]
                         tagged_expression[2].extend(original_token_tagging)
                     tag_sentence.append(tagged_expression)

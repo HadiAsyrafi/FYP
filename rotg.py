@@ -1,22 +1,28 @@
+# -*- coding: utf-8 -*-
+
+# import libraries
 from Tkinter import *
+import cv2
 import ttk
+import time
+import imutils
 import textract
+import threading
+import numpy as np
 import Tkinter, tkFileDialog
 
 from PIL import Image, ImageTk
+from cam2 import PhotoBoothApp
+from imutils.video import VideoStream
+
+# import classes
+from sentiment import *
+from summariser import *
 from web_scraper import web_scraper
 from lang_detector import lang_detect
 from highlighter import highlighter
-from sentiment import *
-from summariser import *
 
-import cv2
-import numpy as np
-import threading
-import imutils
-import os
 
-#   add in new window
 
 class mainGui:
 
@@ -28,23 +34,22 @@ class mainGui:
 	self.master.resizable(width=False, height=True)
 
 	# image
-	bg_image = Image.open("Picture/case2.png")
+	bg_image = Image.open("Backup/Picture/case2.png")
 	bg_image = ImageTk.PhotoImage(bg_image)
 
-	smiley_image = Image.open("Picture/smiley4.png")
+	smiley_image = Image.open("Backup/Picture/smiley4.png")
 	resized = smiley_image.resize((30, 30),Image.ANTIALIAS)
         smiley_image = ImageTk.PhotoImage(resized)
 
-	book_image = Image.open("Picture/book.png")
+	book_image = Image.open("Backup/Picture/book.png")
 	resized = book_image.resize((33, 30),Image.ANTIALIAS)
         book_image = ImageTk.PhotoImage(resized)
 
-	hg_image = Image.open("Picture/hg.png")
+	hg_image = Image.open("Backup/Picture/hg.png")
 	resized = hg_image.resize((35, 30),Image.ANTIALIAS)
         hg_image = ImageTk.PhotoImage(resized)
 
 	# mainframe
-
 	bg = ttk.Label(root, image=bg_image)
 	self.mainframe = ttk.Frame(bg, padding="3 3 12 12")
 	self.mainframe.pack(fill="both", expand=True, padx=40, pady=130)
@@ -64,37 +69,38 @@ class mainGui:
 	vcmd = master.register(self.validate)
         
 	# widget
-
 	self.entry = Entry(self.mainframe, validate="all", validatecommand=(vcmd, '%P'), textvariable=self.url)
 	self.menu = OptionMenu(self.mainframe, self.menuvar, *choices, command=self.menu_)
 	self.textPad(self.mainframe)
-	self.lang_label = ttk.Label(self.mainframe, textvariable=self.language, width=11, relief='sunken').grid(row=1, column=0, sticky=N+S, pady=3)
-	self.sentiment = ttk.Label(self.mainframe, textvariable=self.sentiment_label, width=10, relief='raised').grid(row=1, column=1, sticky=N+S, pady=3)
-	self.smiley = Button(self.mainframe, image=smiley_image, command=self.sentiment_analysis, bd=0).grid(row=1, column=2, sticky=E, padx='3 0')
-	self.summarizer = Button(self.mainframe, image=book_image, command=self.summarize, bd=0).grid(row=1, column=3, sticky=W+N+S, padx='7 0')
-	self.highlight = Button(self.mainframe, image=hg_image, command=self.highlighting, bd=0).grid(row=1, column=3, sticky=E+N+S, padx='0 7')
+	self.lang_label = ttk.Label(self.mainframe, textvariable=self.language, width=11, relief='sunken')
+	self.sentiment = ttk.Label(self.mainframe, textvariable=self.sentiment_label, width=10, relief='raised')
+	self.smiley = Button(self.mainframe, image=smiley_image, command=self.sentiment_analysis, bd=0)
+	self.summarizer = Button(self.mainframe, image=book_image, command=self.summarize, bd=0)
+	self.highlight = Button(self.mainframe, image=hg_image, command=self.highlighting, bd=0)
+
+	# Layout
+	bg.place(x=0, y=0, relwidth=1, relheight=1)
+	self.entry.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
+        self.menu.grid(row=0, column=3, sticky=W+E)
+	self.lang_label.grid(row=1, column=0, sticky=N+S, pady=3)
+	self.sentiment.grid(row=1, column=1, sticky=N+S, pady=3)
+	self.smiley.grid(row=1, column=2, sticky=E, padx='3 0')
+	self.summarizer.grid(row=1, column=3, sticky=W+N+S, padx='7 0')
+	self.highlight.grid(row=1, column=3, sticky=E+N+S, padx='0 7')
 
 	# reassign
-	
 	bg.image = bg_image
 	self.smiley = smiley_image
 	self.summarizer = book_image
 	self.highlight = hg_image
 
-        # Layout
-
-	bg.place(x=0, y=0, relwidth=1, relheight=1)
-	self.entry.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
-        self.menu.grid(row=0, column=3, sticky=W+E)
-
 	# bind
-
 	self.entry.bind('<FocusIn>', self.on_entry_click)
 	self.entry.bind('<FocusOut>', self.on_focusout)
 	self.entry.bind('<Return>', self.wiki_scraper)
 	master.bind ('<Escape>', self.close)
-	# config
 
+	# config
 	self.menu.config(width=7)
 
 
@@ -111,22 +117,41 @@ class mainGui:
 	return
 
     def caminit(self):
-	self.vs = vs
 	self.outputPath = '/home/hadi/Documents/FYP/Picture'
 	self.frame = None
 	self.thread = None
 	self.stopEvent = None
+	return
+
+    def cam(self):
+	print("[INFO] warming up camera...")
+	self.vs = VideoStream(1).start()
+	time.sleep(2.0)
+
+	self.window = Toplevel(self.master)
+	self.window.geometry("+%d+%d" % (530, 170))
+	self.window.panel = None
+
+	btn = ttk.Button(self.window, text="Snapshot!", command=self.takeSnapshot)
+	btn.pack(side="bottom", fill="both", expand="yes", padx=10,pady=10)
+ 
+	
+	self.stopEvent = threading.Event()
+	self.videoLoop()
+ 
+
+	self.window.wm_title("PyImageSearch PhotoBooth")
+	self.window.wm_protocol("WM_DELETE_WINDOW", self.onClose)
+	return
 	
 
     def textPad(self,frame):
 	# widget
-
 	textPad=ttk.Frame(frame)
 	self.text=Text(textPad, relief="sunken", height=26, width=40)	
 	scroll=ttk.Scrollbar(textPad, command=self.text.yview)
 
 	# configure / layout
-
 	self.text.configure(yscrollcommand=scroll.set, state=DISABLED)
 	self.text.config(state=DISABLED)
 	scroll.pack(side=RIGHT, fill=Y)
@@ -136,7 +161,6 @@ class mainGui:
 
     def validate(self, value):
 	return True
-
 
     def update_text(self, display):
 	self.text.config(state=NORMAL)
@@ -156,6 +180,10 @@ class mainGui:
 		    self.pro_text = self.ori_text
 		    self.update_text(self.pro_text)
 		    self.lang_detector(self.ori_text)
+
+	elif value == 'Capture':
+		self.cam()
+
 	return
 
     def on_entry_click(self, event):
@@ -212,7 +240,6 @@ class mainGui:
 	return
 
     def color_text(self, tag, word, fg_color='black', bg_color='white'):
-	# add a space to the end of the word
 	if '.' in word:
 		word = word + '\n\n'
 	else:
@@ -225,7 +252,11 @@ class mainGui:
 	return
 
     def sentiment_analysis(self):
+
 	if self.pro_text == '':
+		return
+
+	elif self.language.get() != '     English':
 		return
 
 	splitter = Splitter()
@@ -246,7 +277,10 @@ class mainGui:
     def summarize(self):
 	self.sum = not self.sum
 	if self.sum:
-		summ = summariser(self.pro_text, len(self.pro_text)/50)
+		try:
+			summ = summariser(unicode(self.pro_text, 'utf-8'), len(self.pro_text)/50)
+		except TypeError:
+			summ = summariser(self.pro_text, len(self.pro_text)/50)
 		output = summ.summarize()
 		summarized = ''
 		for data in output['mean_scored_summary']:
@@ -268,6 +302,57 @@ class mainGui:
 		else:
 			self.pro_text = self.before_sum
 	self.update_text(self.pro_text)
+	return
+
+    def videoLoop(self):
+	try:
+		if not self.stopEvent.is_set():
+			time.sleep(0.1)
+			self.frame = self.vs.read()
+			self.save = self.frame
+			self.frame = imutils.resize(self.frame, width=300)
+		
+			# Convert from BGR order to RGB order
+			# Convert to PIL and then ImageTk format
+			image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+			image = Image.fromarray(image)
+			image = ImageTk.PhotoImage(image)
+			
+			# if the panel is not None, we need to initialize it
+			if self.window.panel is None:
+				self.window.panel = ttk.Label(self.window, image=image)
+				self.window.panel.image = image
+				self.window.panel.pack(side="left", padx=10, pady=10)
+		
+			# otherwise, simply update the panel
+			else:
+				self.window.panel.configure(image=image)
+				self.window.panel.image = image
+ 
+	except RuntimeError, e:
+		print("[INFO] caught a RuntimeError")
+
+	self.window.panel.after(10, self.videoLoop)
+
+
+    def takeSnapshot(self):
+	path = "/home/hadi/Documents/FYP/textract/captured.png"
+	cv2.imwrite(path, self.save)
+	txt = textract.process(path)
+	self.ori_text = txt
+	self.pro_text = self.ori_text
+	self.update_text(self.pro_text)
+	self.lang_detector(self.ori_text)
+	print("Image Captured Succesfully")
+	self.onClose()
+
+
+    def onClose(self):
+	print("[INFO] closing...")
+	self.stopEvent.set()
+	self.vs.stop()
+	del(self.vs)
+	self.window.destroy()
 	return
 
 

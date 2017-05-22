@@ -18,7 +18,6 @@ class lang_detect(object):
 	    tokens = wordpunct_tokenize(self.text)
 	    self.words = [word.lower() for word in tokens]
 
-	    # Compute per language included in nltk number of unique stopwords appearing in analyzed text
 	    for language in stopwords.fileids():
 	    # [danish, dutch, english, finnish, french, german, hungarian, italian, norwegian, portuguese, spanish, swedish, turkish]
 		stopwords_set = set(stopwords.words(language))
@@ -35,7 +34,6 @@ class lang_detect(object):
 	    with open("malay_stopwords.txt") as f:
 	    	stopwords_set = set(f.read().splitlines())
 
-	    #stopwords_set = set(open("malay_stopwords.txt").readlines())
 	    words_set = set(self.words)
 	    common_elements = words_set.intersection(stopwords_set)
 	    languages_ratios['malay'] = len(common_elements)

@@ -43,8 +43,9 @@ class PhotoBoothApp:
 		# start a thread that constantly pools the video sensor for
 		# the most recently read frame
 		self.stopEvent = threading.Event()
-		self.thread = threading.Thread(target=self.videoLoop, args=())
-		self.thread.start()
+		#self.thread = threading.Thread(target=self.videoLoop, args=())
+		#self.thread.start()
+		self.videoLoop()
  
 		# set a callback to handle when the window is closed
 		self.root.wm_title("PyImageSearch PhotoBooth")
@@ -59,7 +60,7 @@ class PhotoBoothApp:
 		# a RunTime error that Tkinter throws due to threading
 		try:
 			# keep looping over frames until we are instructed to stop
-			while not self.stopEvent.is_set():
+			if not self.stopEvent.is_set():
 				# grab the frame from the video stream and resize it to
 				# have a maximum width of 300 pixels
 				self.frame = self.vs.read()
@@ -74,7 +75,7 @@ class PhotoBoothApp:
 		
 				# if the panel is not None, we need to initialize it
 				if self.panel is None:
-					self.panel = tki.Label(image=image)
+					self.panel = ttk.Label(image=image)
 					self.panel.image = image
 					self.panel.pack(side="left", padx=10, pady=10)
 		
@@ -85,6 +86,8 @@ class PhotoBoothApp:
  
 		except RuntimeError, e:
 			print("[INFO] caught a RuntimeError")
+
+		self.panel.after(10, self.videoLoop)
 
 
 	def takeSnapshot(self):
